@@ -120,6 +120,7 @@ class Product_Object():
         self.conditional_write(True,
         positive="The cart currently has %d items"%self.CART_QUANTITY,
         negative="")
+        return self.CART_QUANTITY
 
     def add_product(self,product_name):
         "Add the lowest priced product with the filter condition in name"
@@ -127,7 +128,6 @@ class Product_Object():
         result_flag = self.click_add_product_button(product_name)
         after_cart_quantity = self.get_current_cart_quantity()
         result_flag &= True if after_cart_quantity - before_cart_quantity == 1 else False 
-
         return result_flag
 
     @Wrapit._screenshot
