@@ -13,8 +13,8 @@ class Cart_Page(Base_Page):
     CART_ROW = locators.CART_ROW
     CART_ROW_COLUMN = locators.CART_ROW_COLUMN
     CART_TOTAL = locators.CART_TOTAL
-    COL_NAME = 0
-    COL_PRICE = 1 
+    COL_NAME = 1
+    COL_PRICE = 0 
 
     def start(self):
         "Override the start method of base"
@@ -39,9 +39,12 @@ class Cart_Page(Base_Page):
             column_elements = self.get_elements(self.CART_ROW_COLUMN%(index+1))
             item = []
             for col in column_elements:
-                text = self.get_dom_text(col)
-            item.append(text.decode('ascii'))
+                price = self.get_dom_text(col)
+            for row in row_elements:
+                text = self.get_dom_text(row) 
+            item.append(price.decode('ascii'))
             item = self.process_item(item)
+            item.append(text.decode('ascii').rsplit(' ',1)[0])
             cart_items.append(item)
 
         return cart_items
@@ -53,12 +56,11 @@ class Cart_Page(Base_Page):
             result_flag = True
         self.conditional_write(result_flag,
         positive="The expected cart and actual cart have the same number of items: %d"%len(expected_cart),negative="The expected cart has %d items while the actual cart has %d items"%(len(expected_cart),len(actual_cart)))
-
         return result_flag
     
     def verify_extra_items(self,expected_cart,actual_cart):
         "Items which exist in actual but not in expected"
-        item_match_flag = False 
+        item_match_flag = True 
         for item in actual_cart:
             #Does the item exist in the product list
             found_flag = False 
@@ -67,11 +69,11 @@ class Cart_Page(Base_Page):
             for product in expected_cart:
                 if product.name == item[self.COL_NAME]:
                     found_flag = True
-                    if product.price == item[self.COL_PRICE]:
-                        price_match_flag = True 
-                    else:
-                        expected_price = product.price
-                    break
+                if product.price == item[self.COL_PRICE]:
+                    price_match_flag = True 
+                else:
+                    expected_price = product.price
+                break
             self.conditional_write(found_flag,
             positive="Found the expected item '%s' in the cart"%item[self.COL_NAME],
             negative="Found an unexpected item '%s' in the cart"%item[self.COL_NAME])
@@ -81,7 +83,6 @@ class Cart_Page(Base_Page):
             negative="... the expected price did not match. Expected: %d but Obtained: %d"%(expected_price,item[self.COL_PRICE]))
 
             item_match_flag &= found_flag and price_match_flag
-        
         return item_match_flag
 
     def verify_missing_item(self,expected_cart,actual_cart):
@@ -106,7 +107,6 @@ class Cart_Page(Base_Page):
             self.conditional_write(price_match_flag,
             positive="... the expected price matched to %d"%product.price,
             negative="... the expected price did not match. Expected: %d but Obtained: %d"%(product.price,actual_price)) 
-
         return item_match_flag
 
     def get_total_price(self):
@@ -131,7 +131,6 @@ class Cart_Page(Base_Page):
         self.conditional_write(result_flag,
         positive="The cart total displayed is correct",
         negative="The expected and actual cart totals do not match. Expected: %d, actual: %d"%(expected_total, actual_total))
-
         return result_flag
 
     def verify_cart(self,expected_cart):
@@ -142,5 +141,4 @@ class Cart_Page(Base_Page):
         if result_flag is False:
             result_flag &= self.verify_missing_item(expected_cart,actual_cart)
         result_flag &= self.verify_cart_total(expected_cart)
-
         return result_flag 
