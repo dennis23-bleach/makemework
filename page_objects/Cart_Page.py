@@ -39,12 +39,11 @@ class Cart_Page(Base_Page):
             column_elements = self.get_elements(self.CART_ROW_COLUMN%(index+1))
             item = []
             for col in column_elements:
-                price = self.get_dom_text(col)
-            for row in row_elements:
-                text = self.get_dom_text(row) 
-            item.append(price.decode('ascii'))
+                text = self.get_dom_text(row)
+            item.append(text.decode('ascii').rsplit(' ', 1)[1])
             item = self.process_item(item)
-            item.append(text.decode('ascii').rsplit(' ',1)[0])
+            item.append(text.decode('ascii').rsplit(' ', 1)[0])
+            self.write(item)
             cart_items.append(item)
 
         return cart_items
@@ -69,11 +68,11 @@ class Cart_Page(Base_Page):
             for product in expected_cart:
                 if product.name == item[self.COL_NAME]:
                     found_flag = True
-                if product.price == item[self.COL_PRICE]:
-                    price_match_flag = True 
-                else:
-                    expected_price = product.price
-                break
+                    if product.price == item[self.COL_PRICE]:
+                        price_match_flag = True 
+                    else:
+                        expected_price = product.price
+                    break
             self.conditional_write(found_flag,
             positive="Found the expected item '%s' in the cart"%item[self.COL_NAME],
             negative="Found an unexpected item '%s' in the cart"%item[self.COL_NAME])
@@ -125,11 +124,11 @@ class Cart_Page(Base_Page):
         "Verify the total in the cart"
         expected_total = 0
         for product in expected_cart:
-            expected_total = product.price 
+            expected_total += product.price 
         actual_total = self.get_total_price()
         result_flag = actual_total == expected_total
         self.conditional_write(result_flag,
-        positive="The cart total displayed is correct",
+        positive="The cart total displayed is correct:%d"%(actual_total),
         negative="The expected and actual cart totals do not match. Expected: %d, actual: %d"%(expected_total, actual_total))
         return result_flag
 
